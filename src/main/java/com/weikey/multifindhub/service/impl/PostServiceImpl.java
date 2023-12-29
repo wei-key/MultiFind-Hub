@@ -1,5 +1,6 @@
 package com.weikey.multifindhub.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -308,6 +309,28 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         postVOPage.setRecords(postVOList);
         return postVOPage;
     }
+
+    /**
+     * 搜索帖子
+     * @param searchText
+     * @param pageNum
+     * @param pageSize
+     * @return
+     */
+    @Override
+    public Page<Post> searchPostsByPage(String searchText, long pageNum, long pageSize) {
+        // 参数校验
+        if (StrUtil.isBlank(searchText) || pageNum <= 0 || pageNum > 200 || pageSize <= 0 || pageSize > 20) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        QueryWrapper<Post> queryWrapper = new QueryWrapper<>();
+        queryWrapper.like("title", searchText).or().like("content", searchText);
+
+        Page<Post> postPage = this.page(new Page<>(pageNum, pageSize), queryWrapper);
+        return postPage;
+    }
+
 
 }
 
