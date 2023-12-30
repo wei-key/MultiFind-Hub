@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.weikey.multifindhub.model.dto.post.PostQueryRequest;
 import com.weikey.multifindhub.model.vo.PostVO;
 import com.weikey.multifindhub.model.entity.Post;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -59,5 +60,6 @@ public interface PostService extends IService<Post> {
      */
     Page<PostVO> getPostVOPage(Page<Post> postPage, HttpServletRequest request);
 
-    Page<Post> searchPostsByPage(String searchText, long pageNum, long pageSize);
+    Page<PostVO> listPostVOByPage(PostQueryRequest postQueryRequest,
+                                  HttpServletRequest request);
 }

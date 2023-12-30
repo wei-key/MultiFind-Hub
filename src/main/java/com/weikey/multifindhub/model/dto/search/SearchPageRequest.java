@@ -21,5 +21,10 @@ public class SearchPageRequest extends PageRequest implements Serializable {
      */
     private String searchText;
 
+    /**
+     * 搜索数据类型
+     */
+    private String type;
+
     private static final long serialVersionUID = 1L;
 }

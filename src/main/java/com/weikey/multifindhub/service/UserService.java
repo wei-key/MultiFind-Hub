@@ -7,6 +7,7 @@ import com.weikey.multifindhub.model.dto.user.UserQueryRequest;
 import com.weikey.multifindhub.model.vo.LoginUserVO;
 import com.weikey.multifindhub.model.vo.UserVO;
 import com.weikey.multifindhub.model.entity.User;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
@@ -111,5 +112,6 @@ public interface UserService extends IService<User> {
      */
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 
-    Page<UserVO> searchUsersByPage(String searchText, long pageNum, long pageSize);
+
+    Page<UserVO> listUserVOByPage(UserQueryRequest userQueryRequest);
 }

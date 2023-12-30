@@ -1,6 +1,5 @@
 package com.weikey.multifindhub.service.impl;
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -47,6 +46,7 @@ import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
 /**
  * 帖子服务实现
@@ -311,26 +311,23 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     }
 
     /**
-     * 搜索帖子
-     * @param searchText
-     * @param pageNum
-     * @param pageSize
+     * 分页获取列表（封装类）
+     *
+     * @param postQueryRequest
+     * @param request
      * @return
      */
     @Override
-    public Page<Post> searchPostsByPage(String searchText, long pageNum, long pageSize) {
-        // 参数校验
-        if (StrUtil.isBlank(searchText) || pageNum <= 0 || pageNum > 200 || pageSize <= 0 || pageSize > 20) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-
-        QueryWrapper<Post> queryWrapper = new QueryWrapper<>();
-        queryWrapper.like("title", searchText).or().like("content", searchText);
-
-        Page<Post> postPage = this.page(new Page<>(pageNum, pageSize), queryWrapper);
-        return postPage;
+    public Page<PostVO> listPostVOByPage(PostQueryRequest postQueryRequest,
+                                         HttpServletRequest request) {
+        long current = postQueryRequest.getCurrent();
+        long size = postQueryRequest.getPageSize();
+        // 限制爬虫
+        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        Page<Post> postPage = this.page(new Page<>(current, size),
+                this.getQueryWrapper(postQueryRequest));
+        return this.getPostVOPage(postPage, request);
     }
-
 
 }
 

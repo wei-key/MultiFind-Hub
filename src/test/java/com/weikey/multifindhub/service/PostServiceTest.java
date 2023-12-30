@@ -32,18 +32,5 @@ class PostServiceTest {
         Assertions.assertNotNull(postPage);
     }
 
-    @Test
-    void searchPostsByPage() {
-        Page<Post> page = postService.searchPostsByPage("编程", 1, 10);
-
-        List<Post> records = page.getRecords();
-        long total = page.getTotal();
-        long size = page.getSize();
-        long current = page.getCurrent();
-        System.out.println(records);
-        System.out.println(total);
-        System.out.println(size);
-        System.out.println(current);
-    }
 
 }

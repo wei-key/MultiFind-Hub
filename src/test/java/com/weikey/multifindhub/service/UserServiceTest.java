@@ -38,19 +38,4 @@ public class UserServiceTest {
         }
     }
 
-    @Test
-    void searchUsersByPage() {
-        Page<UserVO> page = userService.searchUsersByPage("李四", 1, 10);
-
-        List<UserVO> records = page.getRecords();
-        long total = page.getTotal();
-        long size = page.getSize();
-        long current = page.getCurrent();
-        System.out.println(records);
-        System.out.println(total);
-        System.out.println(size);
-        System.out.println(current);
-
-    }
-
 }

@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.weikey.multifindhub.exception.ThrowUtils;
 import com.weikey.multifindhub.model.dto.user.UserQueryRequest;
 import com.weikey.multifindhub.model.vo.LoginUserVO;
 import com.weikey.multifindhub.model.vo.UserVO;
@@ -27,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.bind.annotation.RequestBody;
 
 /**
  * 用户服务实现
@@ -240,16 +242,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return queryWrapper;
     }
 
+    /**
+     * 分页获取用户封装列表
+     *
+     * @param userQueryRequest
+     * @return
+     */
     @Override
-    public Page<UserVO> searchUsersByPage(String searchText, long pageNum, long pageSize) {
-        // 参数校验
-        if (StrUtil.isBlank(searchText) || pageNum <= 0 || pageNum > 200 || pageSize <= 0 || pageSize > 20) {
+    public Page<UserVO> listUserVOByPage(UserQueryRequest userQueryRequest) {
+        if (userQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.like("userName", searchText);
-        Page<User> userPage = this.page(new Page<>(pageNum, pageSize), queryWrapper);
-        Page<UserVO> userVOPage = new Page<>(pageNum, pageSize, userPage.getTotal());
+        long current = userQueryRequest.getCurrent();
+        long size = userQueryRequest.getPageSize();
+        // 限制爬虫
+        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        Page<User> userPage = this.page(new Page<>(current, size),
+                this.getQueryWrapper(userQueryRequest));
+        Page<UserVO> userVOPage = new Page<>(current, size, userPage.getTotal());
         List<UserVO> userVO = this.getUserVO(userPage.getRecords());
         userVOPage.setRecords(userVO);
         return userVOPage;

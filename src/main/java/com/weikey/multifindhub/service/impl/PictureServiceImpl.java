@@ -31,7 +31,7 @@ public class PictureServiceImpl implements PictureService {
     @Override
     public Page<Picture> searchPicturesByPage(String searchText, long pageNum, long pageSize) {
         // 参数校验
-        if (StrUtil.isBlank(searchText) || pageNum <= 0 || pageNum > 200 || pageSize <= 0 || pageSize > 20) {
+        if (StrUtil.isBlank(searchText) || pageNum <= 0 || pageSize <= 0 || pageSize > 20) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
 
