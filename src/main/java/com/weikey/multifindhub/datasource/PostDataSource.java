@@ -13,6 +13,9 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
+/**
+ * 文章数据源
+ */
 @Component
 public class PostDataSource  implements DataSource<PostVO> {
     @Resource
@@ -27,6 +30,7 @@ public class PostDataSource  implements DataSource<PostVO> {
         postQueryRequest.setCurrent(pageNum);
         postQueryRequest.setPageSize(pageSize);
 
+        // 获取request对象
         ServletRequestAttributes servletRequestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         HttpServletRequest request = servletRequestAttributes.getRequest();
 

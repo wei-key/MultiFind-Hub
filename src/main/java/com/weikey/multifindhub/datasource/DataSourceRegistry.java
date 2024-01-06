@@ -36,5 +36,4 @@ public class DataSourceRegistry {
     public DataSource getDataSource(String name) {
         return typeDataSourceMap.get(name);
     }
-
 }

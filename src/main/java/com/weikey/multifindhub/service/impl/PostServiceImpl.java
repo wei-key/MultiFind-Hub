@@ -1,5 +1,6 @@
 package com.weikey.multifindhub.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -35,11 +36,14 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
@@ -151,6 +155,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         String sortOrder = postQueryRequest.getSortOrder();
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
         // 过滤
+        // 逻辑删除
         boolQueryBuilder.filter(QueryBuilders.termQuery("isDelete", 0));
         if (id != null) {
             boolQueryBuilder.filter(QueryBuilders.termQuery("id", id));
@@ -193,7 +198,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             boolQueryBuilder.should(QueryBuilders.matchQuery("content", content));
             boolQueryBuilder.minimumShouldMatch(1);
         }
-        // 排序
+        // 排序：默认根据score排序，如果sortField非空，则改为根据sortField排序
         SortBuilder<?> sortBuilder = SortBuilders.scoreSort();
         if (StringUtils.isNotBlank(sortField)) {
             sortBuilder = SortBuilders.fieldSort(sortField);
@@ -205,29 +210,22 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(boolQueryBuilder)
                 .withPageable(pageRequest).withSorts(sortBuilder).build();
         SearchHits<PostEsDTO> searchHits = elasticsearchRestTemplate.search(searchQuery, PostEsDTO.class);
-        Page<Post> page = new Page<>();
-        page.setTotal(searchHits.getTotalHits());
-        List<Post> resourceList = new ArrayList<>();
+
         // 查出结果后，从 db 获取最新动态数据（比如点赞数）
+        Page<Post> page = new Page<>();
+        List<Post> resourceList = new ArrayList<>();
         if (searchHits.hasSearchHits()) {
             List<SearchHit<PostEsDTO>> searchHitList = searchHits.getSearchHits();
             List<Long> postIdList = searchHitList.stream().map(searchHit -> searchHit.getContent().getId())
                     .collect(Collectors.toList());
-            List<Post> postList = baseMapper.selectBatchIds(postIdList);
-            if (postList != null) {
-                Map<Long, List<Post>> idPostMap = postList.stream().collect(Collectors.groupingBy(Post::getId));
-                postIdList.forEach(postId -> {
-                    if (idPostMap.containsKey(postId)) {
-                        resourceList.add(idPostMap.get(postId).get(0));
-                    } else {
-                        // 从 es 清空 db 已物理删除的数据
-                        String delete = elasticsearchRestTemplate.delete(String.valueOf(postId), PostEsDTO.class);
-                        log.info("delete post {}", delete);
-                    }
-                });
-            }
+            // db查出的数据可能与ES中的不同：比ES的少了一些（db中删除后，ES还未同步）；或者 内容有变化
+            resourceList = baseMapper.selectBatchIds(postIdList);
         }
         page.setRecords(resourceList);
+        page.setTotal(resourceList.size());
+        page.setSize(postQueryRequest.getPageSize());
+        page.setCurrent(postQueryRequest.getCurrent());
+
         return page;
     }
 

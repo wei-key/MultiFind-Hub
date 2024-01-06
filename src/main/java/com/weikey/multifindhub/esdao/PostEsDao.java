@@ -11,7 +11,10 @@ import org.springframework.data.elasticsearch.repository.ElasticsearchRepository
  * @author wei-key
  * 
  */
+// 不需要加注解，框架会自动识别注入
 public interface PostEsDao extends ElasticsearchRepository<PostEsDTO, Long> {
 
     List<PostEsDTO> findByUserId(Long userId);
+
+    List<PostEsDTO> findByTitle(String title);
 }

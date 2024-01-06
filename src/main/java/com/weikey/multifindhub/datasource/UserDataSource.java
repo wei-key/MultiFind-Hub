@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
+/**
+ * 用户数据源
+ */
 @Component
 public class UserDataSource implements DataSource<UserVO> {
     @Resource
