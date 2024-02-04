@@ -8,6 +8,7 @@ import com.weikey.multifindhub.exception.BusinessException;
 import com.weikey.multifindhub.exception.ThrowUtils;
 import com.weikey.multifindhub.model.dto.search.SearchPageRequest;
 import com.weikey.multifindhub.model.entity.Picture;
+import com.weikey.multifindhub.model.entity.Post;
 import com.weikey.multifindhub.model.enums.SearchDataTypeEnum;
 import com.weikey.multifindhub.model.vo.PostVO;
 import com.weikey.multifindhub.model.vo.SearchAllVO;
@@ -51,18 +52,13 @@ public class SearchFacade {
 
         SearchAllVO searchAllVO = new SearchAllVO();
 
-        // 将RequestAttributes对象设置为子线程共享
-        // 下文postDataSource.doSearch中需要获取RequestAttributes，但是此方法是在【子线程】中执行的，只有设置为子线程共享后才可以获取到
-        ServletRequestAttributes sra = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        RequestContextHolder.setRequestAttributes(sra, true);
-
         // type 为空，搜索所有类型的数据
         if (StrUtil.isBlank(type)) {
             // 多线程并发
             CompletableFuture<Page<UserVO>> userTask = CompletableFuture.supplyAsync(() ->
                     userDataSource.doSearch(searchText, 1L, 10L));
 
-            CompletableFuture<Page<PostVO>> postTask = CompletableFuture.supplyAsync(() ->
+            CompletableFuture<Page<Post>> postTask = CompletableFuture.supplyAsync(() ->
                     postDataSource.doSearch(searchText, 1L, 10L));
 
             CompletableFuture<Page<Picture>> pictureTask = CompletableFuture.supplyAsync(() ->

@@ -1,9 +1,11 @@
 package com.weikey.multifindhub.model.dto.post;
 
+import cn.hutool.extra.pinyin.PinyinUtil;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.weikey.multifindhub.model.entity.Post;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import lombok.Data;
@@ -37,6 +39,11 @@ public class PostEsDTO implements Serializable {
      * 标题
      */
     private String title;
+
+    /**
+     * 标题建议
+     */
+    private List<String> titleSuggestion;
 
     /**
      * 内容
@@ -86,6 +93,16 @@ public class PostEsDTO implements Serializable {
         }
         PostEsDTO postEsDTO = new PostEsDTO();
         BeanUtils.copyProperties(post, postEsDTO);
+        // 设置titleSuggestion字段
+        String title = post.getTitle();
+        ArrayList<String> titleSuggestion = new ArrayList<>();
+        if (StringUtils.isNotBlank(title)) {
+            titleSuggestion.add(title);
+            // 搜索建议支持拼音
+            titleSuggestion.add(PinyinUtil.getPinyin(title,""));
+        }
+        postEsDTO.setTitleSuggestion(titleSuggestion);
+        // 解析tags字段
         String tagsStr = post.getTags();
         if (StringUtils.isNotBlank(tagsStr)) {
             postEsDTO.setTags(GSON.fromJson(tagsStr, new TypeToken<List<String>>() {

@@ -9,6 +9,7 @@ import com.weikey.multifindhub.model.entity.Post;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * 帖子服务
@@ -62,4 +63,11 @@ public interface PostService extends IService<Post> {
 
     Page<PostVO> listPostVOByPage(PostQueryRequest postQueryRequest,
                                   HttpServletRequest request);
+    /**
+     * 获取搜索建议
+     *
+     * @param prefix 搜索词前缀
+     * @return
+     */
+    List<String> getSearchSuggestion(String prefix);
 }

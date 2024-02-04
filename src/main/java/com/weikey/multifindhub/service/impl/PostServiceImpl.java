@@ -36,21 +36,21 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.search.suggest.SuggestBuilder;
+import org.elasticsearch.search.suggest.SuggestBuilders;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.elasticsearch.core.suggest.response.CompletionSuggestion;
+import org.springframework.data.elasticsearch.core.suggest.response.Suggest;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
 /**
  * 帖子服务实现
@@ -327,6 +327,35 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return this.getPostVOPage(postPage, request);
     }
 
+    /**
+     * 获取搜索建议
+     *
+     * @param prefix 搜索词前缀
+     * @return
+     */
+    @Override
+    public List<String> getSearchSuggestion(String prefix) {
+        ArrayList<String> list = new ArrayList<>();
+        if (StrUtil.isBlank(prefix)) {
+            return list;
+        }
+        SuggestBuilder suggestBuilder = new SuggestBuilder();
+        suggestBuilder.addSuggestion("title-suggest",
+                SuggestBuilders.completionSuggestion("titleSuggestion").prefix(prefix));
+        // 查询
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder().withSuggestBuilder(suggestBuilder).build();
+        SearchHits<PostEsDTO> searchHits = elasticsearchRestTemplate.search(searchQuery, PostEsDTO.class);
+        // 取出结果
+        Suggest.Suggestion.Entry<? extends Suggest.Suggestion.Entry.Option> entry =
+                searchHits.getSuggest().getSuggestion("title-suggest").getEntries().get(0);
+        List<CompletionSuggestion.Entry.Option<PostEsDTO>> options =
+                (List<CompletionSuggestion.Entry.Option<PostEsDTO>>) entry.getOptions();
+
+        if (!options.isEmpty()) {
+            options.forEach(option -> list.add(option.getSearchHit().getContent().getTitleSuggestion().get(0)));
+        }
+        return list;
+    }
 }
 
 
