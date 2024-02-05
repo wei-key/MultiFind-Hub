@@ -37,6 +37,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
@@ -204,11 +205,14 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             sortBuilder = SortBuilders.fieldSort(sortField);
             sortBuilder.order(CommonConstant.SORT_ORDER_ASC.equals(sortOrder) ? SortOrder.ASC : SortOrder.DESC);
         }
+        // 高亮显示
+        HighlightBuilder highlightBuilder = new HighlightBuilder().preTags("<mark style=\"background-color: #ffcc00\">").postTags("</mark>")
+                .field("title").field("content");
         // 分页
         PageRequest pageRequest = PageRequest.of((int) current, (int) pageSize);
         // 构造查询
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(boolQueryBuilder)
-                .withPageable(pageRequest).withSorts(sortBuilder).build();
+                .withPageable(pageRequest).withSorts(sortBuilder).withHighlightBuilder(highlightBuilder).build();
         SearchHits<PostEsDTO> searchHits = elasticsearchRestTemplate.search(searchQuery, PostEsDTO.class);
 
         // 查出结果后，从 db 获取最新动态数据（比如点赞数）
@@ -216,10 +220,75 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         List<Post> resourceList = new ArrayList<>();
         if (searchHits.hasSearchHits()) {
             List<SearchHit<PostEsDTO>> searchHitList = searchHits.getSearchHits();
+
             List<Long> postIdList = searchHitList.stream().map(searchHit -> searchHit.getContent().getId())
                     .collect(Collectors.toList());
             // db查出的数据可能与ES中的不同：比ES的少了一些（db中删除后，ES还未同步）；或者 内容有变化
             resourceList = baseMapper.selectBatchIds(postIdList);
+
+            // 将数据替换为高亮显示后的
+            if (StrUtil.isNotBlank(title)) {
+                HashMap<Long, String> idHighLightedTitleMap = new HashMap<>();
+                // 取出高亮数据
+                searchHitList.forEach(searchHit -> {
+                    List<String> list = searchHit.getHighlightField("title");
+                    if (!list.isEmpty()) {
+                        idHighLightedTitleMap.put(searchHit.getContent().getId(), list.get(0));
+                    }
+                });
+                // 替换
+                resourceList.forEach(resource -> {
+                    String highLightedTitle = idHighLightedTitleMap.get(resource.getId());
+                    if (highLightedTitle != null) {
+                        resource.setTitle(highLightedTitle);
+                    }
+                });
+            }
+            if (StrUtil.isNotBlank(content)) {
+                HashMap<Long, String> idHighLightedContentMap = new HashMap<>();
+                // 取出高亮数据
+                searchHitList.forEach(searchHit -> {
+                    List<String> list = searchHit.getHighlightField("content");
+                    if (!list.isEmpty()) {
+                        idHighLightedContentMap.put(searchHit.getContent().getId(), list.get(0));
+                    }
+                });
+                // 替换
+                resourceList.forEach(resource -> {
+                    String highLightedContent = idHighLightedContentMap.get(resource.getId());
+                    if (highLightedContent != null) {
+                        resource.setContent(highLightedContent);
+                    }
+                });
+            }
+            if (StrUtil.isNotBlank(searchText)) {
+                // 取出高亮数据
+                HashMap<Long, String> idHighLightedContentMap = new HashMap<>();
+                HashMap<Long, String> idHighLightedTitleMap = new HashMap<>();
+                // 取出高亮数据
+                searchHitList.forEach(searchHit -> {
+                    List<String> list = searchHit.getHighlightField("title");
+                    if (!list.isEmpty()) {
+                        idHighLightedTitleMap.put(searchHit.getContent().getId(), list.get(0));
+                    }
+                    List<String> list1 = searchHit.getHighlightField("content");
+                    if (!list1.isEmpty()) {
+                        idHighLightedContentMap.put(searchHit.getContent().getId(), list1.get(0));
+                    }
+                });
+                // 替换
+                resourceList.forEach(resource -> {
+                    String highLightedContent = idHighLightedContentMap.get(resource.getId());
+                    if (highLightedContent != null) {
+                        resource.setContent(highLightedContent);
+                    }
+                    String highLightedTitle = idHighLightedTitleMap.get(resource.getId());
+                    if (highLightedTitle != null) {
+                        resource.setTitle(highLightedTitle);
+                    }
+                });
+            }
+
         }
         page.setRecords(resourceList);
         page.setTotal(resourceList.size());

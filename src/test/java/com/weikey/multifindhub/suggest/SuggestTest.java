@@ -1,22 +1,9 @@
 package com.weikey.multifindhub.suggest;
 
 import cn.hutool.extra.pinyin.PinyinUtil;
-import cn.hutool.http.HttpRequest;
-import co.elastic.clients.elasticsearch.core.search.SuggestionBuilders;
-import com.google.gson.Gson;
-import com.weikey.multifindhub.model.dto.post.PostEsDTO;
-import com.weikey.multifindhub.model.entity.Picture;
-import com.weikey.multifindhub.model.entity.Post;
 import com.weikey.multifindhub.service.PostService;
 import org.elasticsearch.search.suggest.SuggestBuilder;
 import org.elasticsearch.search.suggest.SuggestBuilders;
-import org.elasticsearch.search.suggest.SuggestionBuilder;
-import org.elasticsearch.search.suggest.completion.CompletionSuggestionBuilder;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
@@ -27,11 +14,8 @@ import org.springframework.data.elasticsearch.core.suggest.response.CompletionSu
 import org.springframework.data.elasticsearch.core.suggest.response.Suggest;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @SpringBootTest
 public class SuggestTest {
