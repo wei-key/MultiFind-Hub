@@ -1,11 +1,9 @@
 package com.weikey.multifindhub.controller;
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.weikey.multifindhub.common.BaseResponse;
 import com.weikey.multifindhub.common.ErrorCode;
 import com.weikey.multifindhub.common.ResultUtils;
-import com.weikey.multifindhub.exception.BusinessException;
 import com.weikey.multifindhub.exception.ThrowUtils;
 import com.weikey.multifindhub.model.dto.picture.PictureQueryRequest;
 import com.weikey.multifindhub.model.entity.Picture;
@@ -17,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * 图片接口

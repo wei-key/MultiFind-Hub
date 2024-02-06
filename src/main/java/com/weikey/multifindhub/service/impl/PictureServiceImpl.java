@@ -2,12 +2,16 @@ package com.weikey.multifindhub.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.rholder.retry.Retryer;
+import com.github.rholder.retry.RetryerBuilder;
+import com.github.rholder.retry.StopStrategies;
 import com.google.gson.Gson;
 import com.weikey.multifindhub.common.ErrorCode;
 import com.weikey.multifindhub.exception.BusinessException;
 import com.weikey.multifindhub.exception.ThrowUtils;
 import com.weikey.multifindhub.model.entity.Picture;
 import com.weikey.multifindhub.service.PictureService;
+import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -16,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -37,10 +42,16 @@ public class PictureServiceImpl implements PictureService {
 
         String url = String.format("https://cn.bing.com/images/search?q=%s&form=HDRSC3&first=%d", searchText, (pageNum - 1) * pageSize + 1);
 
+        // html文档
         Document doc = null;
+        Retryer<Document> retryer = RetryerBuilder.<Document>newBuilder()
+                // 有异常则重试
+                .retryIfException()
+                // 设置最大执行次数3次
+                .withStopStrategy(StopStrategies.stopAfterAttempt(3)).build();
         try {
-            doc = Jsoup.connect(url).get();
-        } catch (IOException e) {
+            doc = retryer.call(() -> Jsoup.connect(url).get());
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

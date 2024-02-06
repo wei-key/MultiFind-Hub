@@ -3,6 +3,7 @@ package com.weikey.multifindhub.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.weikey.multifindhub.model.entity.Picture;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
