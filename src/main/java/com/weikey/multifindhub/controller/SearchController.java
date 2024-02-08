@@ -40,6 +40,17 @@ public class SearchController {
     }
 
     /**
+     * 聚合搜索（串行）
+     *
+     * @param searchPageRequest
+     * @return
+     */
+    @PostMapping("/all/sync")
+    public BaseResponse<SearchAllVO> searchAllSync(@RequestBody SearchPageRequest searchPageRequest) {
+        return ResultUtils.success(searchFacade.searchAllSync(searchPageRequest));
+    }
+
+    /**
      * 获取搜索建议
      *
      * @param prefix 搜索词前缀

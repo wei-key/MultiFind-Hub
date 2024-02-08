@@ -19,6 +19,9 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Resource;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 搜索门面
@@ -38,6 +41,10 @@ public class SearchFacade {
     @Resource
     private DataSourceRegistry dataSourceRegistry;
 
+    // 自定义线程池（IO密集型）
+    private static final ThreadPoolExecutor executor = new ThreadPoolExecutor(30, 60, 10, TimeUnit.MINUTES, new LinkedBlockingQueue<>(300));
+
+
     /**
      * 聚合搜索
      *
@@ -56,13 +63,13 @@ public class SearchFacade {
         if (StrUtil.isBlank(type)) {
             // 多线程并发
             CompletableFuture<Page<UserVO>> userTask = CompletableFuture.supplyAsync(() ->
-                    userDataSource.doSearch(searchText, 1L, 10L));
+                    userDataSource.doSearch(searchText, 1L, 10L), executor);
 
             CompletableFuture<Page<Post>> postTask = CompletableFuture.supplyAsync(() ->
-                    postDataSource.doSearch(searchText, 1L, 10L));
+                    postDataSource.doSearch(searchText, 1L, 10L), executor);
 
             CompletableFuture<Page<Picture>> pictureTask = CompletableFuture.supplyAsync(() ->
-                    pictureDataSource.doSearch(searchText, 1L, 10L));
+                    pictureDataSource.doSearch(searchText, 1L, 10L), executor);
 
             CompletableFuture.allOf(userTask, postTask, pictureTask).join();
 
@@ -74,6 +81,40 @@ public class SearchFacade {
                 e.printStackTrace();
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "搜索出现异常");
             }
+        } else {
+            SearchDataTypeEnum typeEnum = SearchDataTypeEnum.getEnumByValue(type);
+            // type 值不合法，报错
+            ThrowUtils.throwIf(typeEnum == null, ErrorCode.PARAMS_ERROR);
+
+            // type 值合法，搜索对应类型的数据
+            DataSource dataSource = dataSourceRegistry.getDataSource(typeEnum.getValue());
+
+            Page page = dataSource.doSearch(searchText, 1L, 10L);
+            searchAllVO.setDataList(page.getRecords());
+        }
+
+        return searchAllVO;
+    }
+
+    /**
+     * 聚合搜索
+     *
+     * @param searchPageRequest
+     * @return
+     */
+    public SearchAllVO searchAllSync(SearchPageRequest searchPageRequest) {
+        // 参数校验
+        ThrowUtils.throwIf(searchPageRequest == null, ErrorCode.PARAMS_ERROR);
+        String searchText = searchPageRequest.getSearchText();
+        String type = searchPageRequest.getType();
+
+        SearchAllVO searchAllVO = new SearchAllVO();
+
+        // type 为空，搜索所有类型的数据
+        if (StrUtil.isBlank(type)) {
+            searchAllVO.setUserList(userDataSource.doSearch(searchText, 1L, 10L).getRecords());
+            searchAllVO.setPostList(postDataSource.doSearch(searchText, 1L, 10L).getRecords());
+            searchAllVO.setPictureList(pictureDataSource.doSearch(searchText, 1L, 10L).getRecords());
         } else {
             SearchDataTypeEnum typeEnum = SearchDataTypeEnum.getEnumByValue(type);
             // type 值不合法，报错
