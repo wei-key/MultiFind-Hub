@@ -45,6 +45,7 @@ public class SearchController {
      * @param searchPageRequest
      * @return
      */
+    @Deprecated
     @PostMapping("/all/sync")
     public BaseResponse<SearchAllVO> searchAllSync(@RequestBody SearchPageRequest searchPageRequest) {
         return ResultUtils.success(searchFacade.searchAllSync(searchPageRequest));

@@ -13,6 +13,7 @@ import com.weikey.multifindhub.model.enums.SearchDataTypeEnum;
 import com.weikey.multifindhub.model.vo.PostVO;
 import com.weikey.multifindhub.model.vo.SearchAllVO;
 import com.weikey.multifindhub.model.vo.UserVO;
+import com.weikey.multifindhub.model.vo.VideoVo;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -39,10 +40,13 @@ public class SearchFacade {
     private PictureDataSource pictureDataSource;
 
     @Resource
+    private VideoDataSource videoDataSource;
+
+    @Resource
     private DataSourceRegistry dataSourceRegistry;
 
     // 自定义线程池（IO密集型）
-    private static final ThreadPoolExecutor executor = new ThreadPoolExecutor(30, 60, 10, TimeUnit.MINUTES, new LinkedBlockingQueue<>(300));
+    private static final ThreadPoolExecutor executor = new ThreadPoolExecutor(40, 80, 10, TimeUnit.MINUTES, new LinkedBlockingQueue<>(300));
 
 
     /**
@@ -71,12 +75,16 @@ public class SearchFacade {
             CompletableFuture<Page<Picture>> pictureTask = CompletableFuture.supplyAsync(() ->
                     pictureDataSource.doSearch(searchText, 1L, 10L), executor);
 
-            CompletableFuture.allOf(userTask, postTask, pictureTask).join();
+            CompletableFuture<Page<VideoVo>> videoTask = CompletableFuture.supplyAsync(() ->
+                    videoDataSource.doSearch(searchText, 1L, 10L), executor);
+
+            CompletableFuture.allOf(userTask, postTask, pictureTask, videoTask).join();
 
             try {
                 searchAllVO.setUserList(userTask.get().getRecords());
                 searchAllVO.setPostList(postTask.get().getRecords());
                 searchAllVO.setPictureList(pictureTask.get().getRecords());
+                searchAllVO.setVideoList(videoTask.get().getRecords());
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "搜索出现异常");
@@ -97,11 +105,12 @@ public class SearchFacade {
     }
 
     /**
-     * 聚合搜索
+     * 聚合搜索（串行）
      *
      * @param searchPageRequest
      * @return
      */
+    @Deprecated
     public SearchAllVO searchAllSync(SearchPageRequest searchPageRequest) {
         // 参数校验
         ThrowUtils.throwIf(searchPageRequest == null, ErrorCode.PARAMS_ERROR);

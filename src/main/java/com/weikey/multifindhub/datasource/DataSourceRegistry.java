@@ -23,6 +23,9 @@ public class DataSourceRegistry {
     @Resource
     private PictureDataSource pictureDataSource;
 
+    @Resource
+    private VideoDataSource videoDataSource;
+
     private Map<String, DataSource> typeDataSourceMap;
 
     @PostConstruct
@@ -31,6 +34,7 @@ public class DataSourceRegistry {
         typeDataSourceMap.put(SearchDataTypeEnum.USER.getValue(), userDataSource);
         typeDataSourceMap.put(SearchDataTypeEnum.POST.getValue(), postDataSource);
         typeDataSourceMap.put(SearchDataTypeEnum.PICTURE.getValue(), pictureDataSource);
+        typeDataSourceMap.put(SearchDataTypeEnum.VIDEO.getValue(), videoDataSource);
     }
 
     public DataSource getDataSource(String name) {

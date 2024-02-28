@@ -25,6 +25,8 @@ public class SearchAllVO implements Serializable {
 
     private List<Picture> pictureList;
 
+    private List<VideoVo> videoList;
+
     /**
      * 单独搜索某一类型数据时，使用此字段存储数据
      */
