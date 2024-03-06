@@ -31,15 +31,24 @@ public class CrawlerTest {
         Gson gson = new Gson();
 
         String url = "https://www.code-nav.cn/api/post/search/page/vo";
+//        String json = "{\n" +
+//                "  \"current\": 1,\n" +
+//                "  \"pageSize\": 8,\n" +
+//                "  \"sortField\": \"createTime\",\n" +
+//                "  \"sortOrder\": \"descend\",\n" +
+//                "  \"category\": \"文章\",\n" +
+//                "  \"reviewStatus\": 1\n" +
+//                "}";
         String json = "{\n" +
                 "  \"current\": 1,\n" +
                 "  \"pageSize\": 8,\n" +
-                "  \"sortField\": \"createTime\",\n" +
+                "  \"sortField\": \"_score\",\n" +
                 "  \"sortOrder\": \"descend\",\n" +
+                "  \"searchText\": \"redis\",\n" +
                 "  \"category\": \"文章\",\n" +
                 "  \"reviewStatus\": 1\n" +
                 "}";
-        String result = HttpRequest.post(url)
+                String result = HttpRequest.post(url)
                 .body(json)
                 .execute()
                 .body();
@@ -49,7 +58,9 @@ public class CrawlerTest {
         List<Map<String, Object>> records = (List<Map<String, Object>>) data.get("records"); // gson将json数组解析为List（ArrayList）
 
         List<Post> postList = new ArrayList<>();
+
         for (Map<String, Object> record : records) {
+
             System.out.println("数字：" + record.get("viewNum").getClass());
             System.out.println("str：" + record.get("category").getClass());
 

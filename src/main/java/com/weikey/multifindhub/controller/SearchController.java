@@ -1,5 +1,7 @@
 package com.weikey.multifindhub.controller;
 
+import com.weikey.multifindhub.annotation.RequestKeyParam;
+import com.weikey.multifindhub.annotation.RequestLock;
 import com.weikey.multifindhub.common.BaseResponse;
 import com.weikey.multifindhub.common.ResultUtils;
 import com.weikey.multifindhub.manager.SearchFacade;
@@ -10,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
@@ -35,7 +38,8 @@ public class SearchController {
      * @return
      */
     @PostMapping("/all")
-    public BaseResponse<SearchAllVO> searchAll(@RequestBody SearchPageRequest searchPageRequest) {
+    @RequestLock(prefix = "MultiFind:RequestLock", timeout = 2)
+    public BaseResponse<SearchAllVO> searchAll(HttpServletRequest request, @RequestBody SearchPageRequest searchPageRequest) {
         return ResultUtils.success(searchFacade.searchAll(searchPageRequest));
     }
 

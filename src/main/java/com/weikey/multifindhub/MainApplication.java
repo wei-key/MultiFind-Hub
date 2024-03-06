@@ -16,7 +16,7 @@ import org.springframework.web.context.request.RequestContextListener;
  * 
  */
 // todo 如需开启 Redis，须移除 exclude 中的内容
-@SpringBootApplication(exclude = {RedisAutoConfiguration.class})
+@SpringBootApplication(/*exclude = {RedisAutoConfiguration.class}*/)
 @MapperScan("com.weikey.multifindhub.mapper")
 @EnableScheduling
 @EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true)
