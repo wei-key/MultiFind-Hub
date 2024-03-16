@@ -7,23 +7,15 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.weikey.multifindhub.model.dto.post.PostEsDTO;
 import com.weikey.multifindhub.model.dto.post.PostQueryRequest;
-import com.weikey.multifindhub.model.vo.PostVO;
-import com.weikey.multifindhub.model.vo.UserVO;
-import com.weikey.multifindhub.common.ErrorCode;
 import com.weikey.multifindhub.constant.CommonConstant;
-import com.weikey.multifindhub.exception.BusinessException;
-import com.weikey.multifindhub.exception.ThrowUtils;
 import com.weikey.multifindhub.mapper.PostMapper;
 import com.weikey.multifindhub.model.entity.Post;
-import com.weikey.multifindhub.model.entity.User;
 import com.weikey.multifindhub.service.PostService;
 import com.weikey.multifindhub.service.UserService;
 import com.weikey.multifindhub.utils.SqlUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -254,6 +246,56 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             options.forEach(option -> list.add(option.getSearchHit().getContent().getTitleSuggestion().get(0)));
         }
         return list;
+    }
+
+    /**
+     * 获取查询包装类
+     *
+     * @param postQueryRequest
+     * @return
+     */
+    @Override
+    public QueryWrapper<Post> getQueryWrapper(PostQueryRequest postQueryRequest) {
+        QueryWrapper<Post> queryWrapper = new QueryWrapper<>();
+        if (postQueryRequest == null) {
+            return queryWrapper;
+        }
+        String searchText = postQueryRequest.getSearchText();
+        String sortField = postQueryRequest.getSortField();
+        String sortOrder = postQueryRequest.getSortOrder();
+        Long id = postQueryRequest.getId();
+        String title = postQueryRequest.getTitle();
+        String content = postQueryRequest.getContent();
+        List<String> tagList = postQueryRequest.getTags();
+        Long userId = postQueryRequest.getUserId();
+        Long notId = postQueryRequest.getNotId();
+        // 拼接查询条件
+        if (StringUtils.isNotBlank(searchText)) {
+            queryWrapper.like("title", searchText).or().like("content", searchText);
+        }
+        queryWrapper.like(StringUtils.isNotBlank(title), "title", title);
+        queryWrapper.like(StringUtils.isNotBlank(content), "content", content);
+        if (CollectionUtils.isNotEmpty(tagList)) {
+            for (String tag : tagList) {
+                queryWrapper.like("tags", "\"" + tag + "\"");
+            }
+        }
+        queryWrapper.ne(ObjectUtils.isNotEmpty(notId), "id", notId);
+        queryWrapper.eq(ObjectUtils.isNotEmpty(id), "id", id);
+        queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);
+        queryWrapper.eq("isDelete", false);
+        queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
+                sortField);
+        return queryWrapper;
+    }
+
+    @Override
+    public Page<Post> listPostVOByPage(PostQueryRequest postQueryRequest, HttpServletRequest request) {
+        long current = postQueryRequest.getCurrent();
+        long pageSize = postQueryRequest.getPageSize();
+        Page<Post> postPage = this.page(new Page<>(current, pageSize),
+                this.getQueryWrapper(postQueryRequest));
+        return postPage;
     }
 }
 

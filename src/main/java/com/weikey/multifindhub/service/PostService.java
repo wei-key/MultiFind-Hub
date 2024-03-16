@@ -34,4 +34,8 @@ public interface PostService extends IService<Post> {
      * @return
      */
     List<String> getSearchSuggestion(String prefix);
+
+    QueryWrapper<Post> getQueryWrapper(PostQueryRequest postQueryRequest);
+
+    Page<Post> listPostVOByPage(PostQueryRequest postQueryRequest, HttpServletRequest request);
 }
