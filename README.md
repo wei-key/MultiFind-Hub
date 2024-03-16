@@ -48,6 +48,7 @@
   - Elasticsearch 搜索引擎
   - Logstash 数据管道
   - Kibana 可视化看板
+- Redis
 - SSM
 - MyBatis-Plus
 - Hutool 工具库
